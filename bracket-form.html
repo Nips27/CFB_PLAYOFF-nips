@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/api/placeholder/1920/1080') center/cover;
+            font-family: Arial, sans-serif;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .bracket-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .bracket {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 40px;
+        }
+        
+        .round {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 200px;
+        }
+        
+        .team-button {
+            background: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .team-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .team-button.selected {
+            background: #ffd700;
+            color: black;
+        }
+        
+        .team-logo {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+        
+        .connector {
+            height: 2px;
+            background: white;
+            width: 20px;
+        }
+        
+        .submit-button {
+            display: block;
+            margin: 40px auto;
+            padding: 15px 30px;
+            background: #ffd700;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255,215,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="bracket-container">
+        <h1 class="title">College Football Playoff</h1>
+        <form id="bracketForm" target="_blank">
+            <div class="bracket">
+                <!-- First Round - Left -->
+                <div class="round">
+                    <button type="button" class="team-button" data-team="Michigan" data-seed="1">
+                        <img src="/api/placeholder/30/30" alt="Michigan" class="team-logo">
+                        Michigan (1)
+                    </button>
+                    <button type="button" class="team-button" data-team="Texas" data-seed="3">
+                        <img src="/api/placeholder/30/30" alt="Texas" class="team-logo">
+                        Texas (3)
+                    </button>
+                </div>
+
+                <!-- Semifinals -->
+                <div class="round">
+                    <button type="button" class="team-button semifinal" disabled>
+                        Winner 1
+                    </button>
+                </div>
+
+                <!-- Championship -->
+                <div class="round">
+                    <button type="button" class="team-button championship" disabled>
+                        Champion
+                    </button>
+                </div>
+
+                <!-- Semifinals -->
+                <div class="round">
+                    <button type="button" class="team-button semifinal" disabled>
+                        Winner 2
+                    </button>
+                </div>
+
+                <!-- First Round - Right -->
+                <div class="round">
+                    <button type="button" class="team-button" data-team="Washington" data-seed="2">
+                        <img src="/api/placeholder/30/30" alt="Washington" class="team-logo">
+                        Washington (2)
+                    </button>
+                    <button type="button" class="team-button" data-team="Alabama" data-seed="4">
+                        <img src="/api/placeholder/30/30" alt="Alabama" class="team-logo">
+                        Alabama (4)
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="submit-button">Submit Predictions</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('bracketForm');
+            const buttons = document.querySelectorAll('.team-button');
+            let selections = {
+                left: null,
+                right: null,
+                champion: null
+            };
+
+            // Replace this URL with your Google Form submission URL
+            const GOOGLE_FORM_URL = 'YOUR_GOOGLE_FORM_URL_HERE';
+            form.action = GOOGLE_FORM_URL;
+
+            buttons.forEach(button => {
+                if (!button.disabled) {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const side = this.closest('.round') === document.querySelector('.round') ? 'left' : 'right';
+                        
+                        // Clear previous selection on this side
+                        const sideButtons = this.closest('.round').querySelectorAll('.team-button');
+                        sideButtons.forEach(btn => btn.classList.remove('selected'));
+                        
+                        // Select this team
+                        this.classList.add('selected');
+                        selections[side] = {
+                            team: this.dataset.team,
+                            seed: this.dataset.seed
+                        };
+
+                        // Update semifinal
+                        const semifinalButton = document.querySelectorAll('.semifinal')[side === 'left' ? 0 : 1];
+                        semifinalButton.textContent = this.dataset.team;
+                        semifinalButton.dataset.team = this.dataset.team;
+                        semifinalButton.disabled = false;
+                        semifinalButton.classList.remove('selected');
+                        
+                        // Clear championship if needed
+                        const championshipButton = document.querySelector('.championship');
+                        championshipButton.textContent = 'Champion';
+                        championshipButton.disabled = true;
+                        championshipButton.classList.remove('selected');
+                        selections.champion = null;
+                    });
+                }
+            });
+
+            // Handle semifinal selections
+            document.querySelectorAll('.semifinal').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.disabled) return;
+
+                    const championshipButton = document.querySelector('.championship');
+                    championshipButton.textContent = this.dataset.team;
+                    championshipButton.dataset.team = this.dataset.team;
+                    championshipButton.disabled = false;
+                    championshipButton.classList.remove('selected');
+                    
+                    document.querySelectorAll('.semifinal').forEach(btn => btn.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Handle championship selection
+            document.querySelector('.championship').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (this.disabled) return;
+                this.classList.toggle('selected');
+                selections.champion = this.classList.contains('selected') ? this.dataset.team : null;
+            });
+
+            form.addEventListener('submit', function(e) {
+                // Add hidden inputs for Google Form fields
+                // You'll need to inspect your Google Form to get the correct field names
+                const formData = new FormData();
+                formData.append('entry.XXXXXX', selections.left?.team || '');
+                formData.append('entry.XXXXXX', selections.right?.team || '');
+                formData.append('entry.XXXXXX', selections.champion || '');
+            });
+        });
+    </script>
+</body>
+</html>
